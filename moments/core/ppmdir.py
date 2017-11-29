@@ -475,6 +475,8 @@ class PPMDir:
                 string = string[:-1]
             else:
                 break
+            if string == 'FV-hires01': 
+                string = 'FV-hires'
         return string + section
 
 class old_format(PPMDir):
@@ -509,14 +511,14 @@ class new_format(PPMDir):
         """ 
         Does path point to a profile type data file.
         """
-
-        return any([path.startswith(prefix) for prefix in self._profiles_substring])
+        base, ext = os.path.splitext(os.path.basename(path)) #JO from just using path which was comparing the dump number to 'yprofile' or 'rprofile'
+        
+        return any([base.startswith(prefix) for prefix in self._profiles_substring])
 
     def _isbobpath(self, path):
         """ 
         Does path point to a bobfile type data file.
         """
-
         return path[:min(4, len(path))].isdigit() and (path[:-3].endswith(".bob") or path[:-3].endswith(".bob8"))
         
 class compact_format(PPMDir):
