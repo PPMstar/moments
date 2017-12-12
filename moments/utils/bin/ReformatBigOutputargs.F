@@ -280,7 +280,7 @@ c     The way this will work is that we will leave the numbers of
 c     X- and Y-teams unchanged, but we will multiply the number of
 c     Z-teams by the factor  newZteamsperOldZteam.
 c
-         NNZBricks = 1
+         NNZBricks = 2
          ntznodes = NTZBricks / NNZBricks
          if (NNZBricks*ntznodes .ne. NTZBricks)   NNZBricks = 1
          ntznodes = NTZBricks / NNZBricks

@@ -22,6 +22,10 @@ In this module the PPM data and configuration files are categorized into four ty
 
 import shutil
 import os
+# Stupid hacky bit -- I'm sorry -- JO relaces os.walk with scandir.walk
+import sys
+sys.path.insert(0, '/home/jerichoo/jupyter_py3/lib/python2.7/site-packages/')
+import scandir
 
 __all__ = ["get_ppmdir", "PPMDir"]
 
@@ -266,7 +270,7 @@ class PPMDir:
         dir = os.path.abspath(self._dir) + "/"
 
         files = []
-        for (dirpath, dirnames, filenames) in os.walk(dir):
+        for (dirpath, dirnames, filenames) in scandir.walk(dir):
             dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
             for filename in filenames:
                 files.append(dirpath + filename)
@@ -292,7 +296,7 @@ class PPMDir:
 
         if files is None:
             files = []
-            for (dirpath, dirnames, filenames) in os.walk(dir):
+            for (dirpath, dirnames, filenames) in scandir.walk(dir):
                 dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
                 for filename in filenames:
                     files.append(dirpath + filename)
@@ -323,7 +327,7 @@ class PPMDir:
 
         if files is None:
             files = []
-            for (dirpath, dirnames, filenames) in os.walk(dir):
+            for (dirpath, dirnames, filenames) in scandir.walk(dir):
                 dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
                 for filename in filenames:
                     files.append(dirpath + filename)
@@ -354,7 +358,7 @@ class PPMDir:
 
         if files is None:
             files = []
-            for (dirpath, dirnames, filenames) in os.walk(dir):
+            for (dirpath, dirnames, filenames) in scandir.walk(dir):
                 dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
                 for filename in filenames:
                     files.append(dirpath + filename)
@@ -403,7 +407,7 @@ class PPMDir:
 
         if files is None:
             files = []
-            for (dirpath, dirnames, filenames) in os.walk(dir):
+            for (dirpath, dirnames, filenames) in scandir.walk(dir):
                 dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
                 for filename in filenames:
                     files.append(dirpath + filename)
