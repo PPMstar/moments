@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[5]:
+# In[1]:
 
 
 import shutil
@@ -24,9 +24,14 @@ ch = logging.StreamHandler()
 log.addHandler(ch)
 log.setLevel(logging.INFO)
 
-def reformat_hv(ftype,dump,info): 
+def reformat_hv(ftype,dump,info):
     
-    log.info(ftype, dump, ' being processed....')
+    #log.info('%s %s  being processed....' % (ftype, dump))
+    
+    if os.path.isfile(info.hv_format.format(ftype=ftype, dump=dump, ext=".hv")):
+        log.info('%s %s  already has hv file overwrite=True to overwrite' % (ftype, dump))
+        return
+    
     for file in info.source.get_dumpfiles(ftype, dump):
         base, ext = os.path.splitext(file)
         RBO_in_ftype = None
@@ -44,14 +49,16 @@ def reformat_hv(ftype,dump,info):
                 nbytes_theoretical *= info.nteams # don't know if this is true
             if nbytes != nbytes_theoretical:
                 if nbytes < nbytes_theoretical:
-                    log.info(nbytes, '> ', nbytes_theoretical, ftype, dump)
-                    log.info('this is not the right size')
+                    log.info('bytes: %s this is not the right size should be %s %s %s %s'                             % (nbytes, '> ', nbytes_theoretical, ftype, dump))
                     break
                 if nbytes > nbytes_theoretical: 
-                    log.info(nbytes, '> ', nbytes_theoretical, ftype, dump)
+                    log.info('bytes: %s %s %s %s %s truncated' % (nbytes, '> ', nbytes_theoretical, ftype, dump))
                     out_dir = os.path.dirname(out_file)
                     if not os.path.exists(out_dir):
-                        os.makedirs(out_dir)
+                        try:
+                            os.makedirs(out_dir)
+                        except:
+                            log.info('Trying to write to a dir while it was created') 
 
                     truncate_command = ["tail","-c",str(nbytes_theoretical),file,">",out_file]
                     command = subprocess.Popen(' '.join(truncate_command), shell=True)
@@ -60,13 +67,14 @@ def reformat_hv(ftype,dump,info):
                 _copy_file(file, out_file)
         else:
             log.info('cannot convert {ftype} files into hv'.format(ftype=ftype))
+            _copy_file(file, info.hv_other_format.format(ftype=ftype, RBO_in_ftype=RBO_in_ftype, dump=dump, ext=ext))
             break
 
     for RBO_key in info.RBO_input_map.keys():         
         if ftype in RBO_key:
             settings = dict((key, info.source_code_definitions.get(key, value)) for key, value in info.RBO_default.items())
             settings.update(info.RBO_settings[RBO_key])
-
+            
             code = fpp.define(info.RBO_source, **settings)
             with open(info.hv_source_format.format(ftype=ftype,dump=dump), "w") as fout:
                 fout.write(code)
@@ -113,10 +121,14 @@ def reformat_hv(ftype,dump,info):
                     log.error('No .hv file was made for {ftype}'.format(ftype=info.hv_format.format(ftype=ftype, dump=dump, ext=".hv")))
                     log.error('Either {RBO} or {bob} command failed'.format(RBO=RBO_command,bob =bob2hv_command))
                     
+                    
 def _copy_file(source, target):
     target_dir = os.path.dirname(target)
     if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+        try:
+            os.makedirs(target_dir)
+        except:
+            log.info('Trying to write to a dir while it was created') 
     try:
         if not os.path.exists(target):
             shutil.copy(source, target)
@@ -127,7 +139,10 @@ def _copy_file(source, target):
 def _move_file(source, target):
     target_dir = os.path.dirname(target)
     if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+        try:
+            os.makedirs(target_dir)
+        except:
+            log.info('Trying to write to a dir while it was created') 
     if not os.path.exists(target):
         shutil.move(source, target)
 
@@ -147,7 +162,7 @@ class reformation_info(object):
             self.source_dir = source._dir
 
         self.target_dir = os.path.abspath(target_dir) + "/"
-        
+        '''
         self.profile_format = self.target_dir + "{ftype}/{ftype}-{dump}{ext}"
         self.bobfile_format = self.target_dir + "{ftype}/{dump}{ext}" #chan
         self.ppmin_format = self.target_dir + "post/{fname}"
@@ -160,8 +175,9 @@ class reformation_info(object):
         self.ppmin_format = self.target_dir + "post/{fname}"
         self.hv_format = self.target_dir + "HV/{ftype}/{ftype}-{dump}{ext}"
         self.hv_processing_format = self.target_dir + "HV_processing/{ftype}/{RBO_in_ftype}-{dump}{ext}"
+        self.hv_other_format = self.target_dir + "other_bob/{ftype}/{RBO_in_ftype}-{dump}{ext}"
         self.hv_source_format = self.target_dir + "HV_processing/{ftype}{dump}_xreformat64_all.F"
-        '''
+
         self.RBO_source = pkg_resources.resource_string("moments.utils", "/bin/ReformatBigOutputargs.F")
         self.RBO_compile_flags = ["-mcmodel=medium", "-i-dynamic", "-tpp7", "-xT", "-fpe0",
                              "-w", "-ip", "-Ob2", "-pc32", "-i8", "-auto", "-fpp2", "-o"]
@@ -211,7 +227,7 @@ class reformation_info(object):
                 
         if 'source_code' not in locals():
             source_code = self.source.get_source_code()[0]
-        log.info(file, ' will be used as the source file')    
+            log.info('%s will be used as the source file' % (file))    
         self.source_code_definitions = fpp.preprocess(source_code)
         if ("nnzteams" in self.source_code_definitions) and ("nnxteams" not in self.source_code_definitions):
             self.source_code_definitions["nnxteams"] = self.source_code_definitions["nnzteams"]
@@ -237,11 +253,11 @@ class reformation_info(object):
                 self.hvfiles.append(ftype)
         self.ppminfiles = self.source.get_ppminfile_types()
     
-def copy_source_code(info):
+def copy_source_code(info,file):
     
-    for file in info.source.get_source_code() + info.source.get_compile_script() + info.source.get_jobscript() + info.source.get_other_files():
-        fname = file.replace(info.source_dir, "")
-        _copy_file(file, info.target_dir + fname)
+    #for file in info.source.get_source_code() + info.source.get_compile_script() + info.source.get_jobscript() + info.source.get_other_files():
+    fname = file.replace(info.source_dir, "")
+    _copy_file(file, info.target_dir + fname)
         
 def copy_profiles(info,ftype,dump):
     
@@ -266,30 +282,35 @@ def copy_ppminfiles(info):
                 fname = os.path.basename(file)
                 _copy_file(file, info.ppmin_format.format(fname=fname))
 
-def reformat_parallel(source_dir,target_dir,all_files=False,max_dumps=None):
+def reformat_parallel(info,target_dir,all_files=False,max_dumps=None):
     
     #setting up a logger
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     ch.setFormatter(formatter)
-    logs_dir = './logs'
+    logs_dir = target_dir + '/reformatting_log'
     
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
 
-    fh = logging.FileHandler(os.path.join(logs_dir, 'log_' + target_dir))
+    fh = logging.FileHandler(os.path.join(logs_dir, 'log_' + target_dir[-2:]))
     fh.setFormatter(formatter)
     log.addHandler(fh)
     
-    info = reformation_info(source_dir,target_dir,all_files=False,max_dumps=None)
+    # copy_only(info)
+    other_files = (
+                    info.source.get_source_code() 
+                    + info.source.get_compile_script() 
+                    + info.source.get_jobscript()
+                    + info.source.get_other_files())
     
-    #copy_only(info)
-    
-    copy_source_code(info)
     copy_ppminfiles(info)
     
-    num_cores = 4 # mp.cpu_count() #this always returns 32
-        
+    num_cores = mp.cpu_count() #this always returns 32
+    
     # Running the copy process in parallel
+    Parallel(n_jobs=num_cores)(
+        delayed(copy_source_code)(info,file) for file in other_files)
+   
     Parallel(n_jobs=num_cores)(
         delayed(copy_profiles)(info,ftype,ndump) for ftype in info.profiles\
         for ndump in info.source.get_dumps(ftype))
@@ -303,12 +324,18 @@ def reformat_parallel(source_dir,target_dir,all_files=False,max_dumps=None):
         delayed(reformat_hv)(ftype,ndump,info) for ftype in info.hvfiles\
         for ndump in info.source.get_dumps(ftype))
                         
-    shutil.rmtree(os.path.dirname(info.hv_source_format.format(ftype="",dump="")))
+    os.system('rm -rf {}'.format(os.path.dirname(info.hv_source_format.format(ftype="",dump=""))))
 
 
-#%%time
-in_dir = 'smaller_dir_for_test'
-out_dir = 'hv-files-test'
-reformat_parallel(in_dir,out_dir,all_files = True)
+for name in [1,2]:
+    
+    try:
+        in_dir = '/home/jerichoo/projects/rrg-fherwig-ad/fherwig/PPM_unprocessed/C/PPM_C{}'.format(name)
+        out_dir = '/scratch/jerichoo/C/pPPM_C{}'.format(name)
 
+        info = reformation_info(in_dir,out_dir,all_files=True,max_dumps=None)
+
+        reformat_parallel(info,out_dir,all_files = True)
+    except:
+        print 'no reformatting done for C {}'.format(name)
 

@@ -22,7 +22,7 @@ In this module the PPM data and configuration files are categorized into four ty
 
 import shutil
 import os
-# Stupid hacky bit -- I'm sorry -- JO relaces os.walk with scandir.walk
+# Stupid hacky bit -- I'm sorry -- JO replaces os.walk with scandir.walk
 import sys
 sys.path.insert(0, '/home/jerichoo/jupyter_py3/lib/python2.7/site-packages/')
 import scandir
@@ -52,7 +52,7 @@ def get_ppmdir(dir="./", all_files=True):
     contents = os.listdir(dir)
     dirs = [file for file in contents if os.path.isdir(dir + file)]
     files = [file for file in contents if os.path.isfile(dir + file)]
-
+     
     if any([directory.isdigit() for directory in dirs]):
         return new_format(dir, all_files=all_files)
     elif any([any([directory.startswith(prefix) for prefix in ["FVandMoms", "HV", "RProfile", "YProfile"]]) for directory in dirs]):
@@ -300,7 +300,7 @@ class PPMDir:
                 dirpath = (os.path.abspath(dirpath) + "/").replace(dir, "")
                 for filename in filenames:
                     files.append(dirpath + filename)
-
+       
         for ftype in self._profiles:
             if ftype in self._cycles:
                 del self._cycles[ftype]
@@ -555,3 +555,30 @@ class compact_format(PPMDir):
         """
 
         return path.startswith("HV") and path.endswith(".hv")
+'''   
+class uncompressed_format(PPMDir):
+    """ 
+    This class analyzes PPM run directories where the bobfiles are placed into
+    seporate directories labeled by the data type and .hv files are in a the
+    directory "HV/". As a submodule of PPMDir the standard PPMDir interface is
+    avaliable.
+    """
+
+    #_ftype_cycle_format = {"profile":"ftype/cycle/ftype-cycle.ext", "bobfile":"ftype/cycle/ftype-cycle.ext", "hvfile":"ftype/cycle.ext"}
+
+    def _ispropath(self, path):
+        """ 
+        Does path point to a profile type data file.
+        """
+        base, ext = os.path.splitext(os.path.basename(path)) #JO from just using path which was comparing the dump number to 'yprofile' or 'rprofile'
+        
+        return any([base.startswith(prefix) for prefix in self._profiles_substring])
+
+    def _isbobpath(self, path):
+        """ 
+        Does path point to a bobfile type data file.
+        """
+
+        return all([not path.startswith(profile) for profile in self._profiles_substring]) and (path[:-3].endswith(".bob") or path[:-3].endswith(".bob8"))
+
+'''

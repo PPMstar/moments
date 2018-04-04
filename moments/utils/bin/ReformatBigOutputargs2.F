@@ -4,7 +4,7 @@ c
 #define nnimage2 8
 #define iincimage 1
 #define isdecompress 0
-#define isBoB8 0
+#define isBoB8 1
 #define isBoB 0
 #define isMom 0
 #define isMomAll 0*isMom
@@ -15,14 +15,14 @@ c
 c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #define nnxteams 2
 #define nnzteams 2
-#define nnyteams 2
+#define nnyteams 4
 c+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 c
-#define nntzbricks 8
+#define nntzbricks 4
 #define nntxbricks nntzbricks
-#define nntybricks 4
+#define nntybricks 2
 #define nnnnx 48
-#define nnnny 96
+#define nnnny 48
 #define nnnnz nnnnx
 c
 #define nntybricksremove 0
@@ -280,7 +280,7 @@ c     The way this will work is that we will leave the numbers of
 c     X- and Y-teams unchanged, but we will multiply the number of
 c     Z-teams by the factor  newZteamsperOldZteam.
 c
-         NNZBricks = 2
+         NNZBricks = 1
          ntznodes = NTZBricks / NNZBricks
          if (NNZBricks*ntznodes .ne. NTZBricks)   NNZBricks = 1
          ntznodes = NTZBricks / NNZBricks
@@ -290,9 +290,9 @@ c
             write (6,*) 'The number of requested new Z teams does not'
             write (6,*) 'result in an integer number of Z-nodes per'
             write (6,*) 'new Z-team.   Job Killed!'
-            write (6,*) 'nodesperZteam, newzteams =',
-     &                   nodesperZteam, newzteams
-            write (6,*) 'ntznodes, NZTeams =',ntznodes,NZTeams
+            write (6,*) 'ZnodesperZteam, newzteams =',
+     &                   ZnodesperZteam, newzteams
+            write (6,*) 'ZnodesperZteam, newzteams =',ntznodes,NZTeams
             STOP
          endif
 c        newZteamsperOldZteam = newzteams / NZTeams
