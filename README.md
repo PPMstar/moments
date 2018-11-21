@@ -1,9 +1,13 @@
 # moments
-python tools for moments data
+Python tools for moments data.
 
-moments is a python package for working with PPM FVandMoms48 data.
+*Note:* 
+* this is only for moments data output from PPMstar version 1 (PPMstar1)
+* access to moments data from PPMstar2 is via the PyPPM module `ppm.py`
 
-examples
+Moments is a python package for working with PPM FVandMoms48 data.
+
+Examples
 --------
 ```
 import moments
@@ -18,7 +22,7 @@ pyplot.plot(data.raxis, moments.radprof(Rho))
 pyplot.show()
 ```
 
-testing
+Testing
 -------
 There are some unit test in ./moments/tests. To run the tests use the command
 ```
